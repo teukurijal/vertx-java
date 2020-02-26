@@ -103,10 +103,12 @@ public class CrudApplication extends AbstractVerticle {
         (http) -> System.out.println("Server ready on port " + http.actualPort()), Throwable::printStackTrace);
   }
 
-  private Single<HttpServer> initHttpServer(Router router, JDBCClient client) {
+  private HttpServer initHttpServer(Router router, JDBCClient client) {
     store = new JdbcProductStore(client);
     // Create the HTTP server and pass the "accept" method to the request handler.
-    return vertx.createHttpServer().requestHandler(router).rxListen(8080);
+    return vertx.createHttpServer().requestHandler(router).listen(
+      Integer.getInteger("http.port"), System.getProperty("http.address", "0.0.0.0")
+    );
   }
 
   private void validateId(RoutingContext ctx) {
