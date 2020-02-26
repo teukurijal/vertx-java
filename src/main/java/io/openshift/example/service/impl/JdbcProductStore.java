@@ -30,6 +30,8 @@ public class JdbcProductStore implements Store {
 
   private static final String INSERT_FORM_REQUEST = "INSERT INTO private.form_request (subject, description, file, approval_type, category_id, created_at) VALUES (?, ?, ?, ?, ?::INTEGER, TIMEZONE('Asia/Jakarta', CURRENT_TIMESTAMP))";
 
+  private static final String UPDATE_FORM_REQUEST = "UPDATE private.form_request SET (subject, description, file, approval_type, category_id, update_at) = (?, ?, ?, ?, ?::INTEGER, TIMEZONE('Asia/Jakarta', CURRENT_TIMESTAMP)) WHERE id = ?";
+
   private static final String LIST_FORM_REQUEST = "SELECT f.id, subject, f.description, file, approval_type, c.name AS category, f.created_at FROM private.form_request f LEFT JOIN private.category c ON c.id = f.category_id";
 
   private static final String SELECT_ONE_FORM_REQUEST = "SELECT fr.id, fr.subject, fr.description, fr.approval_type, c.name as category, array_to_json(array_agg(row_to_json(x))) AS status FROM (SELECT a.form_id, a.user_approval_id, a.approval_status as status, b.full_name as user_approval_name FROM private.log_form a JOIN private.user_approval b ON b.id = a.user_approval_id ORDER BY a.approver_seq ASC ) x JOIN private.form_request fr ON fr.id = x.form_id JOIN private.category c on c.id = fr.category_id JOIN private.user_approval ua on ua.id = x.user_approval_id WHERE fr.id = ? GROUP BY fr.id, c.name";
@@ -208,6 +210,29 @@ public class JdbcProductStore implements Store {
             return Completable.complete();
           })
           .doAfterTerminate(conn::close);
+      });
+  }
+
+  @Override
+  public Completable updateOneFormRequest(int id, JsonObject item) {
+
+    return db.rxGetConnection()
+      .flatMapCompletable(conn -> {
+        JsonArray params = new JsonArray()
+        .add(item.getValue("subject", ""))
+        .add(item.getValue("description", ""))
+        .add(item.getValue("file", ""))
+        .add(item.getValue("approval_type", ""))
+        .add(item.getValue("category_id", ""))
+        .add(id);
+      return conn.rxUpdateWithParams(UPDATE_FORM_REQUEST, params)
+        .flatMapCompletable(up -> {
+          if (up.getUpdated() == 0) {
+            return Completable.error(new NoSuchElementException("unknow item"+id));
+          }
+          return Completable.complete();
+        })
+        .doAfterTerminate(conn::close);
       });
   }
 

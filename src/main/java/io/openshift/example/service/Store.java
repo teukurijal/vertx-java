@@ -33,6 +33,8 @@ public interface Store {
 
   Completable updateShowForm(JsonObject item);
 
+  Completable updateOneFormRequest(int id, JsonObject item);
+
   Observable<JsonObject> updateStatusFormList(JsonObject item);
 
 

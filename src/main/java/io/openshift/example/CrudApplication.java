@@ -60,7 +60,7 @@ public class CrudApplication extends AbstractVerticle {
     router.route("/api/form-request/:id").handler(this::validateId);
 
     // router.post("/api/login").handler(this::getAuth);
-    router.post("/api/login1").handler(this::getUser);
+    router.post("/api/login").handler(this::getUser);
     // implement a basic REST CRUD mapping
     router.get("/api/category").handler(this::getAllCategory);
     router.get("/api/user-approval").handler(this::getAllUserApproval);
@@ -68,6 +68,7 @@ public class CrudApplication extends AbstractVerticle {
     router.post("/api/form-request-add").handler(this::addFormRequest);
     router.get("/api/form-request").handler(this::listFormRequest);
     router.get("/api/form-request/:id").handler(this::getOneFormRequest);
+    router.put("/api/form-request/:id").handler(this::updateOneFormRequest);
     // router.get("api/form_request/:id").handler(this::getFormRequest);
     // router.get("api/form_request").handler(this::getAllFormRequest);
     router.get("/api/form-distribution").handler(this::listFormDistribution);
@@ -85,11 +86,18 @@ public class CrudApplication extends AbstractVerticle {
     // router.get().handler(StaticHandler.create());
 
     // Create a JDBC client
+    // development
+    // JDBCClient jdbc = JDBCClient.createShared(vertx,
+    //     new JsonObject()
+    //         .put("url", "jdbc:postgresql://" + getEnv("MY_DATABASE_SERVICE_HOST", "172.17.0.3") + ":5432/ecompliance")
+    //         .put("driver_class", "org.postgresql.Driver").put("user", getEnv("DB_USERNAME", "user"))
+    //         .put("password", getEnv("DB_PASSWORD", "password")));
+      // production
     JDBCClient jdbc = JDBCClient.createShared(vertx,
         new JsonObject()
-            .put("url", "jdbc:postgresql://" + getEnv("MY_DATABASE_SERVICE_HOST", "172.17.0.3") + ":5432/ecompliance")
-            .put("driver_class", "org.postgresql.Driver").put("user", getEnv("DB_USERNAME", "user"))
-            .put("password", getEnv("DB_PASSWORD", "password")));
+            .put("url", "jdbc:postgresql://" + getEnv("MY_DATABASE_SERVICE_HOST", "52.203.160.194") + ":5432/dfbpd3cplr4ds0")
+            .put("driver_class", "org.postgresql.Driver").put("user", getEnv("DB_USERNAME", "pdjrxskyjczyov"))
+            .put("password", getEnv("DB_PASSWORD", "9f4e2a63ecd68d18cc16943a30bb77830e77454fffa518a69778cb61b35cbddf")));
 
     DBInitHelper.initDatabase(vertx, jdbc).andThen(initHttpServer(router, jdbc)).subscribe(
         (http) -> System.out.println("Server ready on port " + http.actualPort()), Throwable::printStackTrace);
@@ -242,11 +250,6 @@ public class CrudApplication extends AbstractVerticle {
             json.put("status", status);
             array.add(json);
            
-
-          
-            
-            
-            
             System.out.println(">>>>>>>>>>>>resssssss>>>>"+array);
             System.out.println(">>>>>>>>>>>>>>>>>json>>"+json);
             
@@ -387,6 +390,24 @@ public class CrudApplication extends AbstractVerticle {
 
   }
 
+  private void updateOneFormRequest(RoutingContext ctx) {
+    JsonObject item;
+    try {
+      item = ctx.getBodyAsJson();
+    } catch (RuntimeException e) {
+      error(ctx, 415, "invalid payload");
+      return;
+    }
+
+    if (item == null) {
+      error(ctx, 415, "invalid payload");
+      return;
+    }
+
+    // store.updateOneFormRequest(ctx.get("formId"), item)
+
+  }
+
   private void updateStatusForm(RoutingContext ctx) {
     JsonObject item;
     try {
@@ -481,7 +502,7 @@ public class CrudApplication extends AbstractVerticle {
 
     store.readUser(item)
       .subscribe(
-        json -> response.end(item.put("token", "token").put("password","").encodePrettily()),
+        json -> response.end(json.encodePrettily()),
         err -> {
           if (err instanceof NoSuchElementException) {
             error(ctx, 404, err);
