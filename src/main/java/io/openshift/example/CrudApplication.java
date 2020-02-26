@@ -2,6 +2,7 @@ package io.openshift.example;
 
 import io.openshift.example.service.Store;
 import io.openshift.example.service.impl.JdbcProductStore;
+import io.openshift.example.service.impl.StatusSchema;
 import io.vertx.core.Vertx;
 import io.vertx.core.eventbus.EventBus;
 import io.vertx.core.json.JsonArray;
@@ -24,10 +25,17 @@ import io.vertx.rxjava.ext.web.handler.BodyHandler;
 import io.vertx.rxjava.redis.client.Response;
 // import io.vertx.rxjava.ext.web.handler.St
 import rx.Single;
+import rx.Subscriber;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.io.IOException;
 // import java.util.HashMap;
 // import java.util.Map;
 import java.util.NoSuchElementException;
+
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 import static io.openshift.example.Errors.error;
 
@@ -222,17 +230,44 @@ public class CrudApplication extends AbstractVerticle {
     HttpServerResponse response = ctx.response()
       .putHeader("Content-Type", "application/json");
 
+    JsonArray array = new JsonArray();
+
     store.readOneFormRequest(ctx.get("formId"))
-      .subscribe(
-        json -> response.end(json.encodePrettily()),
-        err -> {
-          if (err instanceof NoSuchElementException) {
-            error(ctx, 404, err);
-          } else if (err instanceof IllegalArgumentException) {
-            error(ctx, 415, err);
-          } else {
-            error(ctx, 500, err);
+      .subscribe (
+        json -> { 
+          try {
+            ObjectMapper mapper = new ObjectMapper();
+            List<StatusSchema> status = mapper.readValue(json.getString("status"), new TypeReference<List<StatusSchema>>() {});
+
+            json.put("status", status);
+            array.add(json);
+           
+
+          
+            
+            
+            
+            System.out.println(">>>>>>>>>>>>resssssss>>>>"+array);
+            System.out.println(">>>>>>>>>>>>>>>>>json>>"+json);
+            
+          } catch(Exception e) {
+            e.printStackTrace();
           }
+        },
+        err -> writeError(ctx, err),
+        () -> {
+
+          
+          
+          
+          // JsonObject user = new JsonObject();
+          // for( int i = 0; i < res.size(); i ++) {
+
+          //   // user.add("name", res.getJsonObject(i).getString("approval_name"));
+          //   System.out.println(">>>>>>>>>>>>>>>>>>>"+user);
+          // }
+          // System.out.println(">>>>>>>>>>>>>>>>>>>...."+user);
+          response.end(array.encodePrettily());
         }
       );
   }
@@ -318,7 +353,7 @@ public class CrudApplication extends AbstractVerticle {
                   .putHeader("Location", "/api/form_request/" + res.getLong("id"))
                   .putHeader("Content-Type", "application/json")
                   .setStatusCode(201)
-                  .end(res.encodePrettily()),
+                  .end(json.encodePrettily()),
               err -> writeError(ctx, err)
             );
           }
@@ -387,8 +422,8 @@ public class CrudApplication extends AbstractVerticle {
           err -> writeError(ctx, err),
           () -> { 
           
-          System.out.println(">>>>>>>>>sizecut>>>"+res.size());
-          System.out.println(res.getJsonObject(0).getString("approval_status").equals("APPROVED"));
+          // System.out.println(">>>>>>>>>sizecut>>>"+res.size());
+          // System.out.println(res.getJsonObject(0).getString("approval_status").equals("APPROVED"));
 
           for (int i = 0; i < res.size(); i ++) {
 

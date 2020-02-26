@@ -28,11 +28,12 @@ public class JdbcProductStore implements Store {
 
   private static final String INSERT = "INSERT INTO products (name, stock) VALUES (?, ?::BIGINT)";
 
-  private static final String INSERT_FORM_REQUEST = "INSERT INTO private.form_request (subject, description, file, approval_type, category_id) VALUES (?, ?, ?, ?, ?::INTEGER)";
+  private static final String INSERT_FORM_REQUEST = "INSERT INTO private.form_request (subject, description, file, approval_type, category_id, created_at) VALUES (?, ?, ?, ?, ?::INTEGER, TIMEZONE('Asia/Jakarta', CURRENT_TIMESTAMP))";
 
-  private static final String LIST_FORM_REQUEST = "SELECT f.id, subject, f.description, file, approval_type, c.name AS category FROM private.form_request f LEFT JOIN private.category c ON c.id = f.category_id";
+  private static final String LIST_FORM_REQUEST = "SELECT f.id, subject, f.description, file, approval_type, c.name AS category, f.created_at FROM private.form_request f LEFT JOIN private.category c ON c.id = f.category_id";
 
-  private static final String SELECT_ONE_FORM_REQUEST = "SELECT DISTINCT fr.id, fr.subject, fr.description, fr.approval_type, c.name as category, lf.approval_status as status, ua.id as id, ua.full_name as user_approval FROM private.form_request fr JOIN private.category c on c.id = fr.category_id JOIN private.log_form lf on lf.form_id = fr.id JOIN private.user_approval ua on ua.id = lf.user_approval_id WHERE fr.id = ?";
+  private static final String SELECT_ONE_FORM_REQUEST = "SELECT fr.id, fr.subject, fr.description, fr.approval_type, c.name as category, array_to_json(array_agg(row_to_json(x))) AS status FROM (SELECT a.form_id, a.user_approval_id, a.approval_status as status, b.full_name as user_approval_name FROM private.log_form a JOIN private.user_approval b ON b.id = a.user_approval_id ORDER BY a.approver_seq ASC ) x JOIN private.form_request fr ON fr.id = x.form_id JOIN private.category c on c.id = fr.category_id JOIN private.user_approval ua on ua.id = x.user_approval_id WHERE fr.id = ? GROUP BY fr.id, c.name";
+  //"SELECT DISTINCT fr.id, fr.subject, fr.description, fr.approval_type, c.name as category, lf.approval_status as status, ua.id as id, ua.full_name as user_approval FROM private.form_request fr JOIN private.category c on c.id = fr.category_id JOIN private.log_form lf on lf.form_id = fr.id JOIN private.user_approval ua on ua.id = lf.user_approval_id WHERE fr.id = ?";
 
   private static final String SELECT_ONE = "SELECT * FROM private.products WHERE id = ?";
 
@@ -95,10 +96,8 @@ public class JdbcProductStore implements Store {
         .add(item.getValue("category_id", ""));
       return conn
         .rxUpdateWithParams(INSERT_FORM_REQUEST, params)
-        .map(e -> { 
-          item.put("aca", e.getKeys().getString(1));
+        .map(e -> {
           return item.put("id", e.getKeys().getLong(0));
-
         })
         .doAfterTerminate(conn::close);        
     });
@@ -350,6 +349,7 @@ public class JdbcProductStore implements Store {
           .put("file", array.getString(3))
           .put("approval_type", array.getString(4))
           .put("category", array.getString(5))
+          .put("created_at", array.getString(6))
       );
   }
 
@@ -422,21 +422,23 @@ public class JdbcProductStore implements Store {
   }
 
   @Override
-  public Single<JsonObject> readOneFormRequest(int id) {
+  public Observable<JsonObject> readOneFormRequest(int id) {
     return db.rxGetConnection()
-      .flatMap(conn -> {
+      .flatMapObservable(conn -> {
         JsonArray param = new JsonArray().add(id);
         return conn
-          .rxQueryWithParams(SELECT_ONE_FORM_REQUEST, param)
-          .map(ResultSet::getRows)
-          .flatMap(list -> {
-            if (list.isEmpty()) {
-              return Single.error(new NoSuchElementException("formId '" + id + "' not found"));
-            } else {
-              return Single.just(list.get(0));
-            }
-          })
-          .doAfterTerminate(conn::close);
+          .rxQueryStreamWithParams(SELECT_ONE_FORM_REQUEST, param)
+          .flatMapObservable(SQLRowStream::toObservable)
+          .doAfterTerminate(conn::close)
+          .map(array -> 
+            new JsonObject()
+              .put("id", array.getInteger(0))
+              .put("subject", array.getString(1))
+              .put("description", array.getString(2))
+              .put("approval_type", array.getString(3))
+              .put("category", array.getString(4))
+              .put("status", array.getString(5))
+              );
       });
   }
 

@@ -27,7 +27,7 @@ public interface Store {
 
   Observable<JsonObject> readFormDistribution(int id);
 
-  Single<JsonObject> readOneFormRequest(int id);
+  Observable<JsonObject> readOneFormRequest(int id);
 
   Completable updateStatusForm(int id, JsonObject item);
 

@@ -28,13 +28,10 @@
     <orderEntry type="library" name="Maven: io.netty:netty-resolver:4.1.42.Final" level="project" />
     <orderEntry type="library" name="Maven: io.netty:netty-resolver-dns:4.1.42.Final" level="project" />
     <orderEntry type="library" name="Maven: io.netty:netty-codec-dns:4.1.42.Final" level="project" />
-    <orderEntry type="library" name="Maven: com.fasterxml.jackson.core:jackson-core:2.9.9" level="project" />
     <orderEntry type="library" name="Maven: io.vertx:vertx-auth-jwt:3.8.5" level="project" />
     <orderEntry type="library" name="Maven: io.vertx:vertx-jwt:3.8.5" level="project" />
     <orderEntry type="library" name="Maven: io.vertx:vertx-auth-common:3.8.5" level="project" />
     <orderEntry type="library" name="Maven: com.auth0:java-jwt:3.10.0" level="project" />
-    <orderEntry type="library" name="Maven: com.fasterxml.jackson.core:jackson-databind:2.9.9.1" level="project" />
-    <orderEntry type="library" name="Maven: com.fasterxml.jackson.core:jackson-annotations:2.9.9" level="project" />
     <orderEntry type="library" scope="RUNTIME" name="Maven: commons-codec:commons-codec:1.12" level="project" />
     <orderEntry type="library" name="Maven: io.vertx:vertx-jdbc-client:3.8.5" level="project" />
     <orderEntry type="library" name="Maven: com.mchange:c3p0:0.9.5.4" level="project" />
@@ -177,5 +174,8 @@
     <orderEntry type="library" scope="TEST" name="Maven: org.jboss.arquillian.config:arquillian-config-impl-base:1.4.0.Final" level="project" />
     <orderEntry type="library" scope="TEST" name="Maven: org.jboss.arquillian.config:arquillian-config-spi:1.4.0.Final" level="project" />
     <orderEntry type="library" scope="TEST" name="Maven: org.jboss.shrinkwrap.descriptors:shrinkwrap-descriptors-spi:2.0.0" level="project" />
+    <orderEntry type="library" name="Maven: com.fasterxml.jackson.core:jackson-core:2.9.8" level="project" />
+    <orderEntry type="library" name="Maven: com.fasterxml.jackson.core:jackson-databind:2.9.8" level="project" />
+    <orderEntry type="library" name="Maven: com.fasterxml.jackson.core:jackson-annotations:2.9.8" level="project" />
   </component>
 </module>
