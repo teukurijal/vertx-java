@@ -1,1 +1,1 @@
-web: java $JAVA_OPTS -Dhttp.port=$8080 -jar target/crud-vertx-*-SNAPSHOT.jar
+web: java $JAVA_OPTS -Dhttp.port=8080 -jar target/crud-vertx-*-SNAPSHOT.jar
