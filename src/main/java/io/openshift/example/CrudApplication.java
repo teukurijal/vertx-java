@@ -81,7 +81,7 @@ public class CrudApplication extends AbstractVerticle {
     // router.delete("/api/fruits/:id").handler(this::deleteOne);
 
     // health check
-    router.get("/health").handler(rc -> rc.response().end("OK"));
+    router.get("/").handler(rc -> rc.response().end("OK"));
     // web interface
     // router.get().handler(StaticHandler.create());
 
