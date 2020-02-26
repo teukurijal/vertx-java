@@ -1,1 +1,1 @@
-web: java $JAVA_OPTS -Dhttp.port=$PORT -jar target/crud-vertx-*-SNAPSHOT.jar
+worker: java -jar target/*.jar
