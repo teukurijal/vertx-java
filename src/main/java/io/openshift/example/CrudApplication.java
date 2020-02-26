@@ -107,7 +107,7 @@ public class CrudApplication extends AbstractVerticle {
     store = new JdbcProductStore(client);
     // Create the HTTP server and pass the "accept" method to the request handler.
     return vertx.createHttpServer().requestHandler(router).rxListen(
-      Integer.getInteger("http.port"), System.getProperty("http.address", "0.0.0.0")
+      Integer.getInteger("http.port", 8080), System.getProperty("http.address", "0.0.0.0")
     );
   }
 
