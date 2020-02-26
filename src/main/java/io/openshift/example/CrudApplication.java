@@ -106,7 +106,9 @@ public class CrudApplication extends AbstractVerticle {
   private Single<HttpServer> initHttpServer(Router router, JDBCClient client) {
     store = new JdbcProductStore(client);
     // Create the HTTP server and pass the "accept" method to the request handler.
-    return vertx.createHttpServer().requestHandler(router).rxListen(8080);
+    // return vertx.createHttpServer().requestHandler(router).rxListen(8080);
+    //production
+    return vertx.createHttpServer().requestHandler(router).listen(System.getenv('PORT') as int, '0.0.0.0')
   }
 
   private void validateId(RoutingContext ctx) {
