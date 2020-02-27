@@ -30,6 +30,8 @@ public class JdbcProductStore implements Store {
 
   private static final String INSERT_FORM_REQUEST = "INSERT INTO private.form_request (subject, description, file, approval_type, category_id, created_at) VALUES (?, ?, ?, ?, ?::INTEGER, TIMEZONE('Asia/Jakarta', CURRENT_TIMESTAMP))";
 
+  // private static final String INSERT_FORM_REQUEST = "INSERT INTO private.form_request (subject, description, file, approval_type, category_id, created_at, user_id) VALUES (?, ?, ?, ?, ?::INTEGER, TIMEZONE('Asia/Jakarta', CURRENT_TIMESTAMP), ?)";
+
   private static final String UPDATE_FORM_REQUEST = "UPDATE private.form_request SET (subject, description, file, approval_type, category_id, update_at) = (?, ?, ?, ?, ?::INTEGER, TIMEZONE('Asia/Jakarta', CURRENT_TIMESTAMP)) WHERE id = ?";
 
   private static final String LIST_FORM_REQUEST = "SELECT f.id, subject, f.description, file, approval_type, c.name AS category, f.created_at FROM private.form_request f LEFT JOIN private.category c ON c.id = f.category_id";
@@ -61,7 +63,7 @@ public class JdbcProductStore implements Store {
 
   private static final String LIST_FORM_DISTRIBUTION = "SELECT u.id as user_id, u.full_name AS user_name, fr.subject, fr.description, fr.file, fr.approval_type, c.name AS category, approval_status, is_show, approver_seq FROM private.log_form lf JOIN private.form_request fr ON fr.id = lf.form_id JOIN private.user_approval u ON u.id = lf.user_approval_id JOIN private.category c ON c.id = fr.category_id";
 
-  private static final String SELECT_ONE_FORM_DISTRIBUTION = "SELECT fr.id AS form_id, u.id as user_id, u.full_name AS user_name, fr.subject, fr.description, fr.file, fr.approval_type, c.name AS category, approval_status, is_show, approver_seq FROM private.log_form lf JOIN private.form_request fr ON fr.id = lf.form_id JOIN private.user_approval u ON u.id = lf.user_approval_id JOIN private.category c ON c.id = fr.category_id WHERE u.id = ?";
+  private static final String SELECT_ONE_FORM_DISTRIBUTION = "SELECT fr.id AS form_id, u.id as user_id, u.full_name AS user_name, fr.subject, fr.description, fr.file, fr.approval_type, c.name AS category, approval_status, is_show, approver_seq, fr.created_at, fr.update_at FROM private.log_form lf JOIN private.form_request fr ON fr.id = lf.form_id JOIN private.user_approval u ON u.id = lf.user_approval_id JOIN private.category c ON c.id = fr.category_id WHERE u.id = ?";
 
   private final JDBCClient db;
 
@@ -100,6 +102,7 @@ public class JdbcProductStore implements Store {
         .add(item.getValue("file", ""))
         .add(item.getValue("approval_type", ""))
         .add(item.getValue("category_id", ""));
+        // .add(item.getValue("user_id"))readFormDistribution
       return conn
         .rxUpdateWithParams(INSERT_FORM_REQUEST, params)
         .map(e -> {
@@ -377,6 +380,8 @@ public class JdbcProductStore implements Store {
             .put("approval_status", array.getString(8))
             .put("is_show", array.getBoolean(9))
             .put("approval_seq", array.getLong(10))
+            .put("created_at", array.getString(11))
+            .put("updated_at", array.getString(12))
           );
       });
   }

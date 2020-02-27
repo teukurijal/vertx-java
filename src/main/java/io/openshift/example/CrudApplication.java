@@ -5,6 +5,7 @@ import io.openshift.example.service.impl.JdbcProductStore;
 import io.openshift.example.service.impl.StatusSchema;
 import io.vertx.core.Vertx;
 import io.vertx.core.eventbus.EventBus;
+import io.vertx.core.json.Json;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.auth.AuthProvider;
@@ -100,19 +101,19 @@ public class CrudApplication extends AbstractVerticle {
 
     // Create a JDBC client
     // development
-    // JDBCClient jdbc = JDBCClient.createShared(vertx,
-    //     new JsonObject()
-    //         .put("url", "jdbc:postgresql://" + getEnv("MY_DATABASE_SERVICE_HOST", "172.17.0.3") + ":5432/ecompliance")
-    //         .put("driver_class", "org.postgresql.Driver").put("user", getEnv("DB_USERNAME", "user"))
-    //         .put("password", getEnv("DB_PASSWORD", "password")));
+    JDBCClient jdbc = JDBCClient.createShared(vertx,
+        new JsonObject()
+            .put("url", "jdbc:postgresql://" + getEnv("MY_DATABASE_SERVICE_HOST", "172.17.0.3") + ":5432/ecompliance")
+            .put("driver_class", "org.postgresql.Driver").put("user", getEnv("DB_USERNAME", "user"))
+            .put("password", getEnv("DB_PASSWORD", "password")));
 
     // production++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-    JDBCClient jdbc = JDBCClient.createShared(vertx,
-        new JsonObject()
-            .put("url", "jdbc:postgresql://" + getEnv("MY_DATABASE_SERVICE_HOST", "52.203.160.194") + ":5432/dfbpd3cplr4ds0")
-            .put("driver_class", "org.postgresql.Driver").put("user", getEnv("DB_USERNAME", "pdjrxskyjczyov"))
-            .put("password", getEnv("DB_PASSWORD", "9f4e2a63ecd68d18cc16943a30bb77830e77454fffa518a69778cb61b35cbddf")));
+    // JDBCClient jdbc = JDBCClient.createShared(vertx,
+    //     new JsonObject()
+    //         .put("url", "jdbc:postgresql://" + getEnv("MY_DATABASE_SERVICE_HOST", "52.203.160.194") + ":5432/dfbpd3cplr4ds0")
+    //         .put("driver_class", "org.postgresql.Driver").put("user", getEnv("DB_USERNAME", "pdjrxskyjczyov"))
+    //         .put("password", getEnv("DB_PASSWORD", "9f4e2a63ecd68d18cc16943a30bb77830e77454fffa518a69778cb61b35cbddf")));
 
     //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
@@ -280,7 +281,7 @@ public class CrudApplication extends AbstractVerticle {
         },
         err -> writeError(ctx, err),
         () -> {
-
+          response.end(array.encodePrettily());
         }
       );
   }
