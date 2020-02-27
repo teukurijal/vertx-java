@@ -56,7 +56,7 @@ public class CrudApplication extends AbstractVerticle {
     // enable parsing of request bodies
     router.route().handler(BodyHandler.create());
 
-    router.route().handler(io.vertx.rxjava.ext.web.handler.CorsHandler.create("http://pruecompliance.herokuapp.com")
+    router.route().handler(io.vertx.rxjava.ext.web.handler.CorsHandler.create("http://localhost:8100")
     .allowedMethod(io.vertx.core.http.HttpMethod.GET)
     .allowedMethod(io.vertx.core.http.HttpMethod.POST)
     .allowedMethod(io.vertx.core.http.HttpMethod.PUT)
@@ -101,19 +101,19 @@ public class CrudApplication extends AbstractVerticle {
 
     // Create a JDBC client
     // development
-    // JDBCClient jdbc = JDBCClient.createShared(vertx,
-    //     new JsonObject()
-    //         .put("url", "jdbc:postgresql://" + getEnv("MY_DATABASE_SERVICE_HOST", "172.17.0.3") + ":5432/ecompliance")
-    //         .put("driver_class", "org.postgresql.Driver").put("user", getEnv("DB_USERNAME", "user"))
-    //         .put("password", getEnv("DB_PASSWORD", "password")));
+    JDBCClient jdbc = JDBCClient.createShared(vertx,
+        new JsonObject()
+            .put("url", "jdbc:postgresql://" + getEnv("MY_DATABASE_SERVICE_HOST", "172.17.0.3") + ":5432/ecompliance")
+            .put("driver_class", "org.postgresql.Driver").put("user", getEnv("DB_USERNAME", "user"))
+            .put("password", getEnv("DB_PASSWORD", "password")));
 
     // production++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-    JDBCClient jdbc = JDBCClient.createShared(vertx,
-        new JsonObject()
-            .put("url", "jdbc:postgresql://" + getEnv("MY_DATABASE_SERVICE_HOST", "52.203.160.194") + ":5432/dfbpd3cplr4ds0")
-            .put("driver_class", "org.postgresql.Driver").put("user", getEnv("DB_USERNAME", "pdjrxskyjczyov"))
-            .put("password", getEnv("DB_PASSWORD", "9f4e2a63ecd68d18cc16943a30bb77830e77454fffa518a69778cb61b35cbddf")));
+    // JDBCClient jdbc = JDBCClient.createShared(vertx,
+    //     new JsonObject()
+    //         .put("url", "jdbc:postgresql://" + getEnv("MY_DATABASE_SERVICE_HOST", "52.203.160.194") + ":5432/dfbpd3cplr4ds0")
+    //         .put("driver_class", "org.postgresql.Driver").put("user", getEnv("DB_USERNAME", "pdjrxskyjczyov"))
+    //         .put("password", getEnv("DB_PASSWORD", "9f4e2a63ecd68d18cc16943a30bb77830e77454fffa518a69778cb61b35cbddf")));
 
     //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
@@ -522,7 +522,7 @@ public class CrudApplication extends AbstractVerticle {
   private void getUser(RoutingContext ctx) {
     HttpServerResponse response = ctx.response()
     .putHeader("content-type", "application/json")
-    .putHeader("Access-Control-Allow-Origin", "http://pruecompliance.herokuapp.com/")
+    .putHeader("Access-Control-Allow-Origin", "http://localhost:8100")
     .putHeader("Access-Control-Allow-Headers", "X-Requested-With")
     .putHeader("Access-Control-Allow-Methods","GET, POST, PUT")
     .putHeader("Access-Control-Allow-Credentials", "true");
