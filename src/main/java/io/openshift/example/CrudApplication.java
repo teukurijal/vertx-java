@@ -56,7 +56,7 @@ public class CrudApplication extends AbstractVerticle {
     // enable parsing of request bodies
     router.route().handler(BodyHandler.create());
 
-    router.route().handler(io.vertx.rxjava.ext.web.handler.CorsHandler.create("http://localhost:8100")
+    router.route().handler(io.vertx.rxjava.ext.web.handler.CorsHandler.create("http://pruecompliance.herokuapp.com")
     .allowedMethod(io.vertx.core.http.HttpMethod.GET)
     .allowedMethod(io.vertx.core.http.HttpMethod.POST)
     .allowedMethod(io.vertx.core.http.HttpMethod.PUT)
@@ -82,7 +82,7 @@ public class CrudApplication extends AbstractVerticle {
     router.get("/api/form-request").handler(this::listFormRequest);
     router.get("/api/form-request/:id").handler(this::getOneFormRequest);
     router.put("/api/form-request/:id").handler(this::updateOneFormRequest);
-    router.delete("/api/form-request/:id").handler(this::deleteOneFormRequest);
+    router.post("/api/form-request/:id").handler(this::deleteOneFormRequest);
     // router.get("api/form_request/:id").handler(this::getFormRequest);
     // router.get("api/form_request").handler(this::getAllFormRequest);
     router.get("/api/form-distribution").handler(this::listFormDistribution);
@@ -522,7 +522,7 @@ public class CrudApplication extends AbstractVerticle {
   private void getUser(RoutingContext ctx) {
     HttpServerResponse response = ctx.response()
     .putHeader("content-type", "application/json")
-    .putHeader("Access-Control-Allow-Origin", "http://localhost:8100")
+    .putHeader("Access-Control-Allow-Origin", "http://pruecompliance.herokuapp.com/")
     .putHeader("Access-Control-Allow-Headers", "X-Requested-With")
     .putHeader("Access-Control-Allow-Methods","GET, POST, PUT")
     .putHeader("Access-Control-Allow-Credentials", "true");
