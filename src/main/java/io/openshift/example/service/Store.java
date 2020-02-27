@@ -37,6 +37,10 @@ public interface Store {
 
   Observable<JsonObject> updateStatusFormList(JsonObject item);
 
+  Completable updateFormDistribution(JsonObject param);
+
+  Completable deleteFormRequest(int id);
+
 
   Single<JsonObject> create(JsonObject item);
   Single<JsonObject> read(long id);

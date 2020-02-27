@@ -45,15 +45,19 @@ public class JdbcProductStore implements Store {
 
   private static final String UPDATE = "UPDATE products SET name = ?, stock = ?::BIGINT WHERE id = ?";
 
-  private static final String UPDATE_STATUS_FORM = "UPDATE private.log_form SET approval_status = ? WHERE form_id = ? and user_approval_id = ?";
+  private static final String UPDATE_STATUS_FORM = "UPDATE private.log_form SET approval_status = ?, update_at = TIMEZONE('Asia/Jakarta', CURRENT_TIMESTAMP) WHERE form_id = ? and user_approval_id = ? ";
 
   private static final String UPDATE_SHOW_FORM = "UPDATE private.log_form SET is_show = true WHERE form_id = ? and approver_seq = ?";
 
   private static final String UPDATE_STATUS_FORM_LIST = "SELECT * FROM private.log_form WHERE form_id = ? ORDER BY approver_seq ASC";
 
+  private static final String UPDATE_FORM_DISTRIBUTION = "UPDATE private.log_form SET user_approval_id = ?, approval_status = ?, is_show = ?, update_at = TIMEZONE('Asia/Jakarta', CURRENT_TIMESTAMP)  WHERE form_id = ? AND approver_seq = ?";
+
   private static final String DELETE = "DELETE FROM private.products WHERE id = ?";
 
-  private static final String INSERT_LOG_FORM = "INSERT INTO private.log_form (form_id, user_approval_id, approval_status, is_show, approver_seq) VALUES (?, ?, ?, ?, ?)";
+  private static final String DELETE_FORM_REQUEST = "DELETE FROM private.log_form WHERE form_id IN (SELECT id FROM private.form_request); DELETE FROM private.form_request WHERE id = ?";
+
+  private static final String INSERT_LOG_FORM = "INSERT INTO private.log_form (form_id, user_approval_id, approval_status, is_show, approver_seq, created_at) VALUES (?, ?, ?, ?, ?, TIMEZONE('Asia/Jakarta', CURRENT_TIMESTAMP))";
 
   private static final String LIST_FORM_DISTRIBUTION = "SELECT u.id as user_id, u.full_name AS user_name, fr.subject, fr.description, fr.file, fr.approval_type, c.name AS category, approval_status, is_show, approver_seq FROM private.log_form lf JOIN private.form_request fr ON fr.id = lf.form_id JOIN private.user_approval u ON u.id = lf.user_approval_id JOIN private.category c ON c.id = fr.category_id";
 
@@ -214,21 +218,23 @@ public class JdbcProductStore implements Store {
   }
 
   @Override
-  public Completable updateOneFormRequest(int id, JsonObject item) {
+  public Completable updateOneFormRequest (int id, JsonObject item) {
 
     return db.rxGetConnection()
       .flatMapCompletable(conn -> {
         JsonArray params = new JsonArray()
+        // .add(id)
         .add(item.getValue("subject", ""))
         .add(item.getValue("description", ""))
         .add(item.getValue("file", ""))
         .add(item.getValue("approval_type", ""))
         .add(item.getValue("category_id", ""))
         .add(id);
-      return conn.rxUpdateWithParams(UPDATE_FORM_REQUEST, params)
+      return conn
+        .rxUpdateWithParams(UPDATE_FORM_REQUEST, params)
         .flatMapCompletable(up -> {
           if (up.getUpdated() == 0) {
-            return Completable.error(new NoSuchElementException("unknow item"+id));
+            return Completable.error(new NoSuchElementException("Unknown item '" + id + "'"));
           }
           return Completable.complete();
         })
@@ -281,6 +287,27 @@ public class JdbcProductStore implements Store {
       });
   }
 
+  @Override
+  public Completable updateFormDistribution(JsonObject param) {
+    return db.rxGetConnection()
+      .flatMapCompletable(conn -> {
+        JsonArray params = new JsonArray()
+          .add(param.getValue("user_approval_id"))
+          .add(param.getValue("approval_status"))
+          .add(param.getValue("is_show"))
+          .add(param.getValue("form_id"))
+          .add(param.getValue("approver_seq"));
+        return conn
+          .rxUpdateWithParams(UPDATE_FORM_DISTRIBUTION, params)
+          .flatMapCompletable(up -> {
+            if (up.getUpdated() == 0) {
+              return Completable.error(new NoSuchElementException("Unknown item"));
+            }
+            return Completable.complete();
+          })
+          .doAfterTerminate(conn::close);
+      });
+  }
   // @Override
   // public Completable readUser(JsonObject item) {
     
@@ -464,6 +491,22 @@ public class JdbcProductStore implements Store {
               .put("category", array.getString(4))
               .put("status", array.getString(5))
               );
+      });
+  }
+
+  @Override
+  public Completable deleteFormRequest(int id) {
+    return db.rxGetConnection()
+      .flatMapCompletable(conn -> {
+        JsonArray params = new JsonArray().add(id);
+        return conn.rxUpdateWithParams(DELETE_FORM_REQUEST, params)
+          .flatMapCompletable(up -> {
+            if (up.getUpdated() == 0) {
+              return Completable.error(new NoSuchElementException("Unknown item '" + id + "'"));
+            }
+            return Completable.complete();
+          })
+          .doAfterTerminate(conn::close);
       });
   }
 

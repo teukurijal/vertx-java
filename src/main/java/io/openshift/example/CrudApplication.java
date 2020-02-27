@@ -69,6 +69,7 @@ public class CrudApplication extends AbstractVerticle {
     router.get("/api/form-request").handler(this::listFormRequest);
     router.get("/api/form-request/:id").handler(this::getOneFormRequest);
     router.put("/api/form-request/:id").handler(this::updateOneFormRequest);
+    router.delete("/api/form-request/:id").handler(this::deleteOneFormRequest);
     // router.get("api/form_request/:id").handler(this::getFormRequest);
     // router.get("api/form_request").handler(this::getAllFormRequest);
     router.get("/api/form-distribution").handler(this::listFormDistribution);
@@ -87,17 +88,17 @@ public class CrudApplication extends AbstractVerticle {
 
     // Create a JDBC client
     // development
-    // JDBCClient jdbc = JDBCClient.createShared(vertx,
-    //     new JsonObject()
-    //         .put("url", "jdbc:postgresql://" + getEnv("MY_DATABASE_SERVICE_HOST", "172.17.0.3") + ":5432/ecompliance")
-    //         .put("driver_class", "org.postgresql.Driver").put("user", getEnv("DB_USERNAME", "user"))
-    //         .put("password", getEnv("DB_PASSWORD", "password")));
-      // production
     JDBCClient jdbc = JDBCClient.createShared(vertx,
         new JsonObject()
-            .put("url", "jdbc:postgresql://" + getEnv("MY_DATABASE_SERVICE_HOST", "52.203.160.194") + ":5432/dfbpd3cplr4ds0")
-            .put("driver_class", "org.postgresql.Driver").put("user", getEnv("DB_USERNAME", "pdjrxskyjczyov"))
-            .put("password", getEnv("DB_PASSWORD", "9f4e2a63ecd68d18cc16943a30bb77830e77454fffa518a69778cb61b35cbddf")));
+            .put("url", "jdbc:postgresql://" + getEnv("MY_DATABASE_SERVICE_HOST", "172.17.0.3") + ":5432/ecompliance")
+            .put("driver_class", "org.postgresql.Driver").put("user", getEnv("DB_USERNAME", "user"))
+            .put("password", getEnv("DB_PASSWORD", "password")));
+      // production
+    // JDBCClient jdbc = JDBCClient.createShared(vertx,
+    //     new JsonObject()
+    //         .put("url", "jdbc:postgresql://" + getEnv("MY_DATABASE_SERVICE_HOST", "52.203.160.194") + ":5432/dfbpd3cplr4ds0")
+    //         .put("driver_class", "org.postgresql.Driver").put("user", getEnv("DB_USERNAME", "pdjrxskyjczyov"))
+    //         .put("password", getEnv("DB_PASSWORD", "9f4e2a63ecd68d18cc16943a30bb77830e77454fffa518a69778cb61b35cbddf")));
 
     DBInitHelper.initDatabase(vertx, jdbc).andThen(initHttpServer(router, jdbc)).subscribe(
         (http) -> System.out.println("Server ready on port " + http.actualPort()), Throwable::printStackTrace);
@@ -406,7 +407,48 @@ public class CrudApplication extends AbstractVerticle {
       return;
     }
 
-    // store.updateOneFormRequest(ctx.get("formId"), item)
+    JsonArray userApproval = (JsonArray) item.getValue("user_approval");
+    String approvalType = (String) item.getValue("approval_type");
+    Integer formId = (Integer) ctx.get("formId");
+
+    store.updateOneFormRequest(ctx.get("formId"), item)
+      .subscribe(
+        () -> {
+          // idForm.put("id", json.getValue("id"));
+          System.out.println(">>>>>>>>>>>>>>."+userApproval);
+
+          for (int i = 0; i < userApproval.size(); i ++) {
+
+            JsonObject param = new JsonObject()
+              .put("form_id", formId)
+              .put("user_approval_id", userApproval.getInteger(i))
+              .put("approval_status", "PENDING")
+              .put("approver_seq", i + 1);
+
+              if (approvalType.equals("serial")) {
+                if(i == 0) {
+                  param.put("is_show", true);
+                } else {
+                  param.put("is_show", false);
+                }
+              } else {
+                  param.put("is_show", true);
+              }
+
+            store.updateFormDistribution(param)
+              .subscribe(
+                () ->
+                ctx.response()
+                  .putHeader("Location", "/api/form_request/")
+                  .putHeader("Content-Type", "application/json")
+                  .setStatusCode(201)
+                  .end(param.encodePrettily()),
+                err -> writeError(ctx, err)
+              );
+          }
+        },
+        err -> writeError(ctx, err)
+      );
 
   }
 
@@ -445,9 +487,6 @@ public class CrudApplication extends AbstractVerticle {
           err -> writeError(ctx, err),
           () -> { 
           
-          // System.out.println(">>>>>>>>>sizecut>>>"+res.size());
-          // System.out.println(res.getJsonObject(0).getString("approval_status").equals("APPROVED"));
-
           for (int i = 0; i < res.size(); i ++) {
 
             if(res.getJsonObject(i).getString("approval_status").equals("APPROVED")) {
@@ -529,6 +568,23 @@ public class CrudApplication extends AbstractVerticle {
 
   private void deleteOne(RoutingContext ctx) {
     store.delete(ctx.get("fruitId"))
+      .subscribe(
+        () ->
+          ctx.response()
+            .setStatusCode(204)
+            .end(),
+        err -> {
+          if (err instanceof NoSuchElementException) {
+            error(ctx, 404, err);
+          } else {
+            error(ctx, 415, err);
+          }
+        }
+      );
+  }
+
+  private void deleteOneFormRequest(RoutingContext ctx) {
+    store.deleteFormRequest(ctx.get("formId"))
       .subscribe(
         () ->
           ctx.response()
