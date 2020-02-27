@@ -54,6 +54,18 @@ public class CrudApplication extends AbstractVerticle {
     Router router = Router.router(vertx);
     // enable parsing of request bodies
     router.route().handler(BodyHandler.create());
+
+    router.route().handler(io.vertx.rxjava.ext.web.handler.CorsHandler.create("http://localhost:8100")
+    .allowedMethod(io.vertx.core.http.HttpMethod.GET)
+    .allowedMethod(io.vertx.core.http.HttpMethod.POST)
+    .allowedMethod(io.vertx.core.http.HttpMethod.PUT)
+    .allowedMethod(io.vertx.core.http.HttpMethod.DELETE)
+    .allowCredentials(true)
+    .allowedHeader("Access-Control-Allow-Header")
+    .allowedHeader("Access-Control-Allow-Method")
+    .allowedHeader("Access-Control-Allow-Origin")
+    .allowedHeader("Access-Control-Allow-Credentials")
+    .allowedHeader("Content-Type"));
     // perform validation of the :id parameter
     router.route("/api/fruits/:id").handler(this::validateId);
     router.route("/api/form-distribution/user/:id").handler(this::validateId);
@@ -88,17 +100,17 @@ public class CrudApplication extends AbstractVerticle {
 
     // Create a JDBC client
     // development
-    // JDBCClient jdbc = JDBCClient.createShared(vertx,
-    //     new JsonObject()
-    //         .put("url", "jdbc:postgresql://" + getEnv("MY_DATABASE_SERVICE_HOST", "172.17.0.3") + ":5432/ecompliance")
-    //         .put("driver_class", "org.postgresql.Driver").put("user", getEnv("DB_USERNAME", "user"))
-    //         .put("password", getEnv("DB_PASSWORD", "password")));
-      // production
     JDBCClient jdbc = JDBCClient.createShared(vertx,
         new JsonObject()
-            .put("url", "jdbc:postgresql://" + getEnv("MY_DATABASE_SERVICE_HOST", "52.203.160.194") + ":5432/dfbpd3cplr4ds0")
-            .put("driver_class", "org.postgresql.Driver").put("user", getEnv("DB_USERNAME", "pdjrxskyjczyov"))
-            .put("password", getEnv("DB_PASSWORD", "9f4e2a63ecd68d18cc16943a30bb77830e77454fffa518a69778cb61b35cbddf")));
+            .put("url", "jdbc:postgresql://" + getEnv("MY_DATABASE_SERVICE_HOST", "172.17.0.3") + ":5432/ecompliance")
+            .put("driver_class", "org.postgresql.Driver").put("user", getEnv("DB_USERNAME", "user"))
+            .put("password", getEnv("DB_PASSWORD", "password")));
+      // production
+    // JDBCClient jdbc = JDBCClient.createShared(vertx,
+    //     new JsonObject()
+    //         .put("url", "jdbc:postgresql://" + getEnv("MY_DATABASE_SERVICE_HOST", "52.203.160.194") + ":5432/dfbpd3cplr4ds0")
+    //         .put("driver_class", "org.postgresql.Driver").put("user", getEnv("DB_USERNAME", "pdjrxskyjczyov"))
+    //         .put("password", getEnv("DB_PASSWORD", "9f4e2a63ecd68d18cc16943a30bb77830e77454fffa518a69778cb61b35cbddf")));
 
     DBInitHelper.initDatabase(vertx, jdbc).andThen(initHttpServer(router, jdbc)).subscribe(
         (http) -> System.out.println("Server ready on port " + http.actualPort()), Throwable::printStackTrace);
@@ -149,7 +161,12 @@ public class CrudApplication extends AbstractVerticle {
 
   private void getAllCategory(RoutingContext ctx) {
     HttpServerResponse response = ctx.response()
-      .putHeader("Content-Type", "application/json");
+      .putHeader("content-type", "application/json");
+      // .putHeader("Access-Control-Allow-Origin", "http://localhost:8100")
+      // .putHeader("Access-Control-Allow-Headers", "X-Requested-With")
+      // .putHeader("Access-Control-Allow-Methods","GET, POST, PUT")
+      // .putHeader("Access-Control-Allow-Credentials", "true");
+      
     JsonArray res = new JsonArray();
     store.readAllCategory()
       .subscribe(
@@ -253,9 +270,6 @@ public class CrudApplication extends AbstractVerticle {
             json.put("status", status);
             array.add(json);
            
-            System.out.println(">>>>>>>>>>>>resssssss>>>>"+array);
-            System.out.println(">>>>>>>>>>>>>>>>>json>>"+json);
-            
           } catch(Exception e) {
             e.printStackTrace();
           }
@@ -263,17 +277,6 @@ public class CrudApplication extends AbstractVerticle {
         err -> writeError(ctx, err),
         () -> {
 
-          
-          
-          
-          // JsonObject user = new JsonObject();
-          // for( int i = 0; i < res.size(); i ++) {
-
-          //   // user.add("name", res.getJsonObject(i).getString("approval_name"));
-          //   System.out.println(">>>>>>>>>>>>>>>>>>>"+user);
-          // }
-          // System.out.println(">>>>>>>>>>>>>>>>>>>...."+user);
-          response.end(array.encodePrettily());
         }
       );
   }
@@ -369,28 +372,6 @@ public class CrudApplication extends AbstractVerticle {
         err -> writeError(ctx, err)
       );
 
-   
-
-      // System.out.println("==================================="+idForm);
-      // JsonArray userApproval = (JsonArray) item.getValue("user_approval");
-      // System.out.println(userApproval);
-
-      // for (int i = 0; i < userApproval.size(); i ++) {
-      //   System.out.println("========================" + userApproval.getValue(i));
-
-      //   // store.createFormRequest(item)
-      //   // .subscribe(
-      //   //   json ->
-      //   //     ctx.response()
-      //   //       .putHeader("Location", "/api/form_request/" + json.getLong("id"))
-      //   //       .putHeader("Content-Type", "application/json")
-      //   //       .setStatusCode(201)
-      //   //       .end(json.encodePrettily()),
-      //   //   err -> writeError(ctx, err)
-      //   // );
-
-      // }
-
   }
 
   private void updateOneFormRequest(RoutingContext ctx) {
@@ -414,8 +395,6 @@ public class CrudApplication extends AbstractVerticle {
     store.updateOneFormRequest(ctx.get("formId"), item)
       .subscribe(
         () -> {
-          // idForm.put("id", json.getValue("id"));
-          System.out.println(">>>>>>>>>>>>>>."+userApproval);
 
           for (int i = 0; i < userApproval.size(); i ++) {
 
@@ -537,7 +516,11 @@ public class CrudApplication extends AbstractVerticle {
 
   private void getUser(RoutingContext ctx) {
     HttpServerResponse response = ctx.response()
-    .putHeader("Content-Type", "application/json");
+    .putHeader("content-type", "application/json")
+    .putHeader("Access-Control-Allow-Origin", "http://localhost:8100")
+    .putHeader("Access-Control-Allow-Headers", "X-Requested-With")
+    .putHeader("Access-Control-Allow-Methods","GET, POST, PUT")
+    .putHeader("Access-Control-Allow-Credentials", "true");
 
     JsonObject item = ctx.getBodyAsJson();
 
